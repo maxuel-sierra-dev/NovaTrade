@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Crypto Country</title>
+    <link rel="icon" href="img/logo.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body,html{margin:0;background:#0b0e14;color:white;font-family:system-ui,sans-serif;min-height:100vh;}
+        .sidebar{background:#12151e;border-right:1px solid #1c202e;width:64px;position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px;z-index:100;}
+        .nav-btn{width:44px;height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:2px;color:#5a5f72;font-size:9px;text-align:center;text-decoration:none;transition:background .15s,color .15s;}
+        .nav-btn:hover{background:#1c202e;color:#fff;} .nav-btn.active{background:#1c202e;color:#f5c518;}
+        .nav-btn span{font-size:18px;line-height:1;} .nav-divider{width:36px;height:1px;background:#1c202e;margin:4px 0;}
+        .main{margin-left:64px;padding:24px 28px;max-width:720px;}
+        .section{background:#12151e;border:1px solid #1c202e;border-radius:14px;padding:20px;margin-bottom:16px;}
+        .section-title{font-size:13px;font-weight:700;color:#f5c518;text-transform:uppercase;letter-spacing:.08em;margin:0 0 16px;}
+        .row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1c202e;}
+        .row:last-child{border-bottom:none;padding-bottom:0;}
+        .row-label{font-size:14px;font-weight:500;}
+        .row-sub{font-size:12px;color:#5a5f72;margin-top:2px;}
+        /* Toggle */
+        .toggle{position:relative;width:44px;height:24px;cursor:pointer;}
+        .toggle input{opacity:0;width:0;height:0;position:absolute;}
+        .toggle-track{position:absolute;inset:0;background:#2a2f3e;border-radius:24px;transition:background .2s;}
+        .toggle input:checked + .toggle-track{background:#00c15d;}
+        .toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;background:white;border-radius:50%;transition:transform .2s;}
+        .toggle input:checked ~ .toggle-thumb{transform:translateX(20px);}
+        input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:#2a2f3e;border-radius:4px;outline:none;}
+        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:#f5c518;border-radius:50%;cursor:pointer;}
+        select{background:#0b0e14;border:1px solid #2a2f3e;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:13px;outline:none;}
+        .btn-save{background:#00c15d;border:none;color:white;padding:10px 24px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;transition:filter .15s;}
+        .btn-save:hover{filter:brightness(1.1);}
+        .btn-danger{background:transparent;border:1px solid #ff4a5b44;color:#ff4a5b;padding:10px 24px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;transition:background .15s;}
+        .btn-danger:hover{background:#ff4a5b18;}
+        .toast-cfg{position:fixed;bottom:24px;right:24px;background:#12151e;border:1px solid #00c15d;border-radius:12px;padding:12px 18px;font-size:13px;font-weight:700;color:#00c15d;z-index:999;transition:all .3s;opacity:0;transform:translateY(10px);}
+        .toast-cfg.show{opacity:1;transform:translateY(0);}
+    </style>
+</head>
+<body>
+<nav class="sidebar">
+    <img src="img/logo.png" style="width:32px;height:32px;border-radius:6px;margin-bottom:4px;" onerror="this.style.display='none'">
+    <a href="index.html" class="nav-btn"><span>📈</span><p>Gráfico</p></a>
+    <a href="Precios-Cryptos.html" class="nav-btn"><span>₿</span><p>Cripto</p></a>
+    <div class="nav-divider"></div>
+    <a href="Historial.html" class="nav-btn"><span>📋</span><p>Historial</p></a>
+    <a href="Cuentas.html" class="nav-btn"><span>👤</span><p>Cuenta</p></a>
+    <a href="Config.html" class="nav-btn active"><span>⚙️</span><p>Config</p></a>
+</nav>
+
+<div class="main">
+    <div class="mb-6">
+        <h1 style="font-size:24px;font-weight:800;margin:0;">Configuración</h1>
+        <p style="color:#5a5f72;font-size:13px;margin:4px 0 0;">Personaliza tu experiencia de trading</p>
+    </div>
+
+    <!-- CUENTA DEMO -->
+    <div class="section">
+        <p class="section-title">💰 Cuenta Demo</p>
+        <div class="row">
+            <div><p class="row-label">Balance inicial</p><p class="row-sub">Se aplica al reiniciar la cuenta</p></div>
+            <select id="cfgBalance">
+                <option value="1000">$1,000</option>
+                <option value="5000">$5,000</option>
+                <option value="10000" selected>$10,000</option>
+                <option value="50000">$50,000</option>
+                <option value="100000">$100,000</option>
+            </select>
+        </div>
+        <div class="row">
+            <div><p class="row-label">Retorno por operación</p><p class="row-sub" id="returnLabel">92%</p></div>
+            <input type="range" id="cfgReturn" min="70" max="99" value="92" style="width:140px;" oninput="document.getElementById('returnLabel').textContent=this.value+'%'">
+        </div>
+        <div class="row" style="border-bottom:none;">
+            <div><p class="row-label">Reiniciar cuenta demo</p><p class="row-sub">Vuelve al balance inicial</p></div>
+            <button class="btn-danger" onclick="resetDemo()">Reiniciar</button>
+        </div>
+    </div>
+
+    <!-- TRADING -->
+    <div class="section">
+        <p class="section-title">📈 Trading</p>
+        <div class="row">
+            <div><p class="row-label">Tiempo de expiración por defecto</p><p class="row-sub">Preselección al abrir el simulador</p></div>
+            <select id="cfgExpTime">
+                <option value="30">30 segundos</option>
+                <option value="60" selected>1 minuto</option>
+                <option value="120">2 minutos</option>
+                <option value="300">5 minutos</option>
+                <option value="600">10 minutos</option>
+            </select>
+        </div>
+        <div class="row">
+            <div><p class="row-label">Inversión por defecto</p></div>
+            <select id="cfgInv">
+                <option value="10">$10</option>
+                <option value="50">$50</option>
+                <option value="100" selected>$100</option>
+                <option value="200">$200</option>
+                <option value="500">$500</option>
+            </select>
+        </div>
+        <div class="row">
+            <div><p class="row-label">Sonido al ganar/perder</p></div>
+            <label class="toggle">
+                <input type="checkbox" id="cfgSound" checked>
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+            </label>
+        </div>
+    </div>
+
+    <!-- APARIENCIA -->
+    <div class="section">
+        <p class="section-title">🎨 Apariencia</p>
+        <div class="row">
+            <div><p class="row-label">Color de velas alcistas</p></div>
+            <input type="color" id="cfgColorUp" value="#00c15d" style="width:40px;height:32px;border:1px solid #2a2f3e;border-radius:8px;background:#0b0e14;cursor:pointer;padding:2px;">
+        </div>
+        <div class="row">
+            <div><p class="row-label">Color de velas bajistas</p></div>
+            <input type="color" id="cfgColorDn" value="#ff4a5b" style="width:40px;height:32px;border:1px solid #2a2f3e;border-radius:8px;background:#0b0e14;cursor:pointer;padding:2px;">
+        </div>
+        <div class="row">
+            <div><p class="row-label">Mostrar cuadrícula en gráfico</p></div>
+            <label class="toggle">
+                <input type="checkbox" id="cfgGrid" checked>
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+            </label>
+        </div>
+    </div>
+
+    <!-- NOTIFICACIONES -->
+    <div class="section">
+        <p class="section-title">🔔 Notificaciones</p>
+        <div class="row">
+            <div><p class="row-label">Notificaciones del navegador</p><p class="row-sub" id="notifStatus">Estado desconocido</p></div>
+            <button class="btn-save" style="padding:8px 16px;font-size:13px;" onclick="requestNotif()">Activar</button>
+        </div>
+        <div class="row">
+            <div><p class="row-label">Alertas de precios crypto</p><p class="row-sub">Desde la página de Cripto</p></div>
+            <label class="toggle">
+                <input type="checkbox" id="cfgPriceAlerts" checked>
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+            </label>
+        </div>
+    </div>
+
+    <!-- DATOS -->
+    <div class="section">
+        <p class="section-title">🗄️ Datos</p>
+        <div class="row">
+            <div><p class="row-label">Borrar historial de trades</p><p class="row-sub">Esta acción no se puede deshacer</p></div>
+            <button class="btn-danger" onclick="deleteHistory()">Borrar</button>
+        </div>
+        <div class="row">
+            <div><p class="row-label">Borrar todas las alertas</p></div>
+            <button class="btn-danger" onclick="deleteAlerts()">Borrar</button>
+        </div>
+        <div class="row">
+            <div><p class="row-label">Restaurar configuración</p><p class="row-sub">Vuelve a los valores originales</p></div>
+            <button class="btn-danger" onclick="resetConfig()">Restaurar</button>
+        </div>
+    </div>
+
+    <div class="flex gap-3 mt-4">
+        <button class="btn-save" onclick="saveConfig()">✅ Guardar cambios</button>
+        <span style="color:#5a5f72;font-size:12px;align-self:center;">Los cambios se aplican al guardar</span>
+    </div>
+</div>
+
+<div class="toast-cfg" id="toast"></div>
+
+<script>
+const DEFAULTS = {balance:'10000',expTime:'60',inv:'100',sound:true,colorUp:'#00c15d',colorDn:'#ff4a5b',grid:true,priceAlerts:true,returnPct:92};
+
+function loadConfig(){
+    const cfg = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const c = {...DEFAULTS,...cfg};
+    document.getElementById('cfgBalance').value = c.balance;
+    document.getElementById('cfgExpTime').value = c.expTime;
+    document.getElementById('cfgInv').value = c.inv;
+    document.getElementById('cfgSound').checked = c.sound;
+    document.getElementById('cfgColorUp').value = c.colorUp;
+    document.getElementById('cfgColorDn').value = c.colorDn;
+    document.getElementById('cfgGrid').checked = c.grid;
+    document.getElementById('cfgPriceAlerts').checked = c.priceAlerts;
+    document.getElementById('cfgReturn').value = c.returnPct;
+    document.getElementById('returnLabel').textContent = c.returnPct + '%';
+    // Notif status
+    if('Notification' in window){
+        const s = {'granted':'✅ Activas','denied':'❌ Bloqueadas','default':'⚠️ Sin configurar'};
+        document.getElementById('notifStatus').textContent = s[Notification.permission] || 'Desconocido';
+    }
+}
+
+function saveConfig(){
+    const cfg = {
+        balance: document.getElementById('cfgBalance').value,
+        expTime: document.getElementById('cfgExpTime').value,
+        inv: document.getElementById('cfgInv').value,
+        sound: document.getElementById('cfgSound').checked,
+        colorUp: document.getElementById('cfgColorUp').value,
+        colorDn: document.getElementById('cfgColorDn').value,
+        grid: document.getElementById('cfgGrid').checked,
+        priceAlerts: document.getElementById('cfgPriceAlerts').checked,
+        returnPct: document.getElementById('cfgReturn').value,
+    };
+    localStorage.setItem('appConfig', JSON.stringify(cfg));
+    showToast('✅ Configuración guardada');
+}
+
+function resetDemo(){
+    const cfg = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const bal = cfg.balance || DEFAULTS.balance;
+    localStorage.setItem('demoBalance', bal);
+    showToast('💰 Balance reiniciado a $' + Number(bal).toLocaleString());
+}
+
+function requestNotif(){
+    if(!('Notification' in window)){showToast('⚠️ No soportado');return;}
+    Notification.requestPermission().then(p=>{
+        const s={'granted':'✅ Activas','denied':'❌ Bloqueadas','default':'⚠️ Sin configurar'};
+        document.getElementById('notifStatus').textContent = s[p];
+        showToast(p==='granted'?'✅ Notificaciones activadas':'⚠️ Permiso denegado');
+    });
+}
+
+function deleteHistory(){if(!confirm('¿Borrar historial?'))return;localStorage.removeItem('tradeHistory');showToast('🗑 Historial borrado');}
+function deleteAlerts(){if(!confirm('¿Borrar todas las alertas?'))return;localStorage.removeItem('crypto_alerts');showToast('🗑 Alertas borradas');}
+function resetConfig(){if(!confirm('¿Restaurar configuración por defecto?'))return;localStorage.removeItem('appConfig');loadConfig();showToast('🔄 Configuración restaurada');}
+
+let toastTimer;
+function showToast(msg){
+    clearTimeout(toastTimer);
+    const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+    toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+loadConfig();
+</script>
+</body>
+</html>

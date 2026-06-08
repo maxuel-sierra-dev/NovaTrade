@@ -1,0 +1,50 @@
+        body, html { height: 100vh; margin: 0; background: #0b0e14; overflow: hidden; color: white; }
+        #chart { width: 100%; height: 100%; }
+        .trading-panel { background: #12151e; border-left: 1px solid #1c202e; width: 280px; }
+        select { background: #0b0e14; border: 1px solid #2a2f3e; border-radius: 8px; color: #e2e8f0; padding: 6px 8px; font-size: 12px; outline: none; width: 100%; transition: border-color .2s; }
+        select:focus { border-color: #f5c518; }
+        .time-btn { background: #0b0e14; border: 1px solid #2a2f3e; border-radius: 6px; color: #94a3b8; padding: 4px 0; font-size: 11px; cursor: pointer; text-align: center; transition: all .15s; }
+        .time-btn:hover, .time-btn.active { background: #f5c51818; border-color: #f5c518; color: #f5c518; }
+        /* Timer overlay */
+        #timerOverlay { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 10px; background: #12151e; border: 1px solid #2a2f3e; border-radius: 12px; padding: 10px 18px; z-index: 20; }
+        #timerOverlay.show { display: flex; }
+        /* Entry line label */
+        #entryLabel { position: absolute; left: 12px; display: none; align-items: center; gap: 8px; background: #12151e; border: 1px solid #2a2f3e; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; z-index: 10; pointer-events: none; }
+        #entryLabel.show { display: flex; }
+
+        body, html { height: 100vh; margin: 0; background: #0b0e14; overflow: hidden; color: white; }
+
+        .sidebar { 
+            background: #12151e; 
+            border-right: 1px solid #1c202e; 
+            width: 64px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 12px 0; 
+            gap: 8px; 
+        }
+
+        .nav-btn { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            gap: 2px; 
+            color: #5a5f72; 
+            font-size: 9px; 
+            text-align: center; 
+            text-decoration: none; 
+            transition: background 0.15s, color 0.15s; 
+        }
+
+        .nav-btn:hover { background: #1c202e; color: #fff; }
+        .nav-btn.active { background: #1c202e; color: #f5c518; }
+
+        .nav-btn span { font-size: 18px; }
+
+        .nav-divider { width: 36px; height: 1px; background: #1c202e; margin: 4px 0; }

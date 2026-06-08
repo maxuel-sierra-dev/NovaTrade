@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Juan Carlos, Natanael, Luis, Fray, Milciades, Maxuel">
+    <meta name="description" content="Simulador de trading en vivo con gráficos, múltiples activos y operaciones binarias.">
+    <meta name="keywords" content="trading, crypto">
+    <title>Quotex Live Movement</title>
+    <link rel="icon" href="img/logo.ico" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body, html { height: 100vh; margin: 0; background: #0b0e14; overflow: hidden; color: white; }
+        #chart { width: 100%; height: 100%; }
+        .trading-panel { background: #12151e; border-left: 1px solid #1c202e; width: 280px; }
+        .sidebar { background: #12151e; border-right: 1px solid #1c202e; width: 64px; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 8px; }
+        .nav-btn { width: 44px; height: 44px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 2px; color: #5a5f72; font-size: 9px; text-align: center; text-decoration: none; transition: background 0.15s, color 0.15s; }
+        .nav-btn:hover { background: #1c202e; color: #fff; }
+        .nav-btn.active { background: #1c202e; color: #f5c518; }
+        .nav-btn span { font-size: 18px; line-height: 1; }
+        .nav-divider { width: 36px; height: 1px; background: #1c202e; margin: 4px 0; }
+        select { background: #0b0e14; border: 1px solid #2a2f3e; border-radius: 8px; color: #e2e8f0; padding: 6px 8px; font-size: 12px; outline: none; width: 100%; transition: border-color .2s; }
+        select:focus { border-color: #f5c518; }
+        .time-btn { background: #0b0e14; border: 1px solid #2a2f3e; border-radius: 6px; color: #94a3b8; padding: 4px 0; font-size: 11px; cursor: pointer; text-align: center; transition: all .15s; }
+        .time-btn:hover, .time-btn.active { background: #f5c51818; border-color: #f5c518; color: #f5c518; }
+        /* Timer overlay */
+        #timerOverlay { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 10px; background: #12151e; border: 1px solid #2a2f3e; border-radius: 12px; padding: 10px 18px; z-index: 20; }
+        #timerOverlay.show { display: flex; }
+        /* Entry line label */
+        #entryLabel { position: absolute; left: 12px; display: none; align-items: center; gap: 8px; background: #12151e; border: 1px solid #2a2f3e; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; z-index: 10; pointer-events: none; }
+        #entryLabel.show { display: flex; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- TOP BAR -->
+    <div class="h-14 bg-[#12151e] border-b border-gray-800 flex items-center px-4 justify-between">
+        <div class="flex items-center space-x-3">
+            <img src="img/logo.png" alt="Logo" style="width:32px;height:32px;object-fit:contain;border-radius:6px;">
+            <div class="bg-green-500/10 text-green-500 text-sm px-2 py-0.5 rounded animate-pulse font-bold">LIVE</div>
+            <span id="pairLabel" class="text-lg font-bold text-gray-200">EUR/USD (OTC)</span>
+            <span id="livePrice" class="text-lg font-bold font-mono" style="color:#00c15d">1.08500</span>
+            <span id="changeBadge" class="text-xs px-2 py-0.5 rounded font-mono" style="background:#00c15d18;color:#00c15d">+0.00%</span>
+        </div>
+        <div class="font-bold text-yellow-500 animate-pulse" id="balanceDisplay">DEMO 🔄: $10,000.00</div>
+    </div>
+
+    <div class="flex flex-1 relative overflow-hidden">
+
+        <!-- SIDEBAR NAV -->
+        <nav class="sidebar">
+            <a href="index.html" class="nav-btn active" title="Gráfico">
+                <span>📈</span><p>Gráfico</p>
+            </a>
+            <a href="Precios-Cryptos.html" class="nav-btn" title="Cripto" style="color:#f5c518;">
+                <span>₿</span><p>Cripto</p>
+            </a>
+            <div class="nav-divider"></div>
+            <a href="Historial.html" class="nav-btn" title="Historial"><span>📋</span><p>Historial</p></a>
+            <a href="Cuentas.html" class="nav-btn" title="Cuenta"><span>👤</span><p>Cuenta</p></a>
+            <a href="config.html" class="nav-btn" title="Config"><span>⚙️</span><p>Config</p></a>
+        </nav>
+
+        <!-- CHART -->
+        <main class="flex-1 relative">
+            <div id="chart"></div>
+
+            <!-- Timer overlay -->
+            <div id="timerOverlay">
+                <svg width="36" height="36" viewBox="0 0 36 36" style="transform:rotate(-90deg)">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="#1c202e" stroke-width="3"/>
+                    <circle id="timerCircle" cx="18" cy="18" r="15" fill="none" stroke="#f5c518" stroke-width="3"
+                        stroke-dasharray="94.25" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke .5s"/>
+                </svg>
+                <div>
+                    <div style="font-size:10px;color:#5a5f72">cierra en</div>
+                    <div id="timerNum" style="font-size:14px;font-weight:800;font-family:monospace">--</div>
+                </div>
+                <div id="timerDir" style="font-size:22px"></div>
+                <div>
+                    <div style="font-size:10px;color:#5a5f72">entrada</div>
+                    <div id="timerEntry" style="font-size:12px;font-weight:700;font-family:monospace;color:#f5c518">--</div>
+                </div>
+            </div>
+
+            <!-- Entry marker -->
+            <div id="entryLabel">
+                <span id="entryDir"></span>
+                <span style="color:#5a5f72">Entrada:</span>
+                <span id="entryPrice" style="color:#f5c518;font-family:monospace"></span>
+                <span id="entryPnl" style="font-family:monospace"></span>
+            </div>
+        </main>
+
+        <!-- TRADING PANEL -->
+        <aside class="trading-panel p-4 flex flex-col space-y-3 overflow-y-auto">
+
+            <!-- Depósito / Retirar -->
+            <div class="flex gap-2">
+                <button id="btnDeposit" class="flex-1 bg-[#00c15d] h-10 rounded-xl font-black text-sm hover:brightness-110 active:scale-95 transition-all">➕ Depósito</button>
+                <button id="btnWithdraw" class="flex-1 bg-[#b91c1c] h-10 rounded-xl font-black text-sm hover:brightness-110 active:scale-95 transition-all">➖ Retirar</button>
+            </div>
+
+            <!-- Seleccionar activo -->
+            <div class="bg-[#1c202e] p-3 rounded border border-gray-700">
+                <label class="text-[11px] text-yellow-500 block mb-1 uppercase tracking-wider">Activo</label>
+                <select id="assetSelect">
+                    <optgroup label="── Cripto ──">
+                        <option value="BTC">₿ Bitcoin / USD</option>
+                        <option value="ETH">Ξ Ethereum / USD</option>
+                        <option value="SOL">◎ Solana / USD</option>
+                        <option value="BNB">B BNB / USD</option>
+                        <option value="XRP">X XRP / USD</option>
+                        <option value="DOGE">Ð Dogecoin / USD</option>
+                    </optgroup>
+                    <optgroup label="── Forex ──">
+                        <option value="EUR" selected>EUR / USD (OTC)</option>
+                        <option value="GBP">GBP / USD</option>
+                        <option value="JPY">USD / JPY</option>
+                        <option value="CAD">USD / CAD</option>
+                        <option value="AUD">AUD / USD</option>
+                        <option value="CHF">USD / CHF</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Inversión -->
+            <div class="bg-[#1c202e] p-3 rounded border border-gray-700">
+                <label class="text-[11px] text-yellow-500 block mb-1 uppercase tracking-wider">Inversión</label>
+                <div class="flex items-center gap-2">
+                    <button onclick="adjInv(-50)" class="w-8 h-8 rounded-lg border border-gray-600 text-gray-400 hover:text-white hover:bg-gray-700 text-lg flex items-center justify-center transition-all">−</button>
+                    <input type="number" id="invInput" value="100" min="1"
+                        class="flex-1 bg-transparent text-center font-bold text-yellow-500 outline-none text-base border-0">
+                    <button onclick="adjInv(50)" class="w-8 h-8 rounded-lg border border-gray-600 text-gray-400 hover:text-white hover:bg-gray-700 text-lg flex items-center justify-center transition-all">+</button>
+                </div>
+                <div class="flex gap-1 mt-2">
+                    <button onclick="setInv(10)"  class="flex-1 time-btn">$10</button>
+                    <button onclick="setInv(50)"  class="flex-1 time-btn">$50</button>
+                    <button onclick="setInv(100)" class="flex-1 time-btn">$100</button>
+                    <button onclick="setInv(500)" class="flex-1 time-btn">$500</button>
+                </div>
+            </div>
+
+            <!-- Tiempo -->
+            <div class="bg-[#1c202e] p-3 rounded border border-gray-700">
+                <label class="text-[11px] text-yellow-500 block mb-1 uppercase tracking-wider">Tiempo de expiración</label>
+                <div class="grid grid-cols-4 gap-1">
+                    <button class="time-btn" onclick="setExp(30)">30s</button>
+                    <button class="time-btn active" onclick="setExp(60)">1m</button>
+                    <button class="time-btn" onclick="setExp(120)">2m</button>
+                    <button class="time-btn" onclick="setExp(300)">5m</button>
+                    <button class="time-btn" onclick="setExp(600)">10m</button>
+                    <button class="time-btn" onclick="setExp(900)">15m</button>
+                    <button class="time-btn" onclick="setExp(1800)">30m</button>
+                    <button class="time-btn" onclick="setExp(3600)">1h</button>
+                </div>
+            </div>
+
+            <!-- Pago estimado -->
+            <div class="border-t border-gray-800 pt-2 flex justify-between items-center">
+                <div>
+                    <span class="text-[11px] text-yellow-500 block uppercase tracking-wider">Pago estimado</span>
+                    <span class="text-lg font-bold" id="pagoDisplay">$192.00</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[11px] text-gray-500 block">Retorno</span>
+                    <span class="text-base font-bold text-gray-300">92%</span>
+                </div>
+            </div>
+
+            <!-- Botones trade -->
+            <button id="btnUp" onclick="ejecutar('UP')"
+                class="h-14 rounded-xl font-black italic text-lg transition-all hover:brightness-110 active:scale-95"
+                style="background:#00c15d">▲ SUBIR</button>
+            <button id="btnDn" onclick="ejecutar('DOWN')"
+                class="h-14 rounded-xl font-black italic text-lg transition-all hover:brightness-110 active:scale-95"
+                style="background:#ff4a5b">▼ BAJAR</button>
+
+            <!-- Historial rápido -->
+            <div class="bg-[#1c202e] p-3 rounded border border-gray-700">
+                <label class="text-[11px] text-yellow-500 block mb-2 uppercase tracking-wider">Últimas operaciones</label>
+                <div id="histList" class="space-y-1 text-xs text-gray-500 text-center">Sin historial</div>
+            </div>
+
+            <!-- Divisas vs USD -->
+            <div class="bg-[#1c202e] p-3 rounded border border-gray-700">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-[11px] text-yellow-500 font-bold uppercase tracking-wider">Divisas vs USD</label>
+                    <span class="text-green-400 text-[10px] font-bold animate-pulse">● LIVE</span>
+                </div>
+                <div id="forexList" class="space-y-1">
+                    <div class="text-gray-600 text-xs text-center py-2">Cargando...</div>
+                </div>
+            </div>
+
+            <button id="btnHelp" class="bg-green-600 h-12 w-full rounded-xl font-black italic hover:brightness-110 active:scale-95 transition-all">💬 AYUDA</button>
+        </aside>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // ---- ACTIVOS ----
+        const ASSETS = {
+            BTC: { label: 'BTC / USD', base: 103000, vol: 0.0004 },
+            ETH: { label: 'ETH / USD', base: 2400,   vol: 0.0005 },
+            SOL: { label: 'SOL / USD', base: 155,     vol: 0.0006 },
+            BNB: { label: 'BNB / USD', base: 610,     vol: 0.0004 },
+            XRP: { label: 'XRP / USD', base: 2.3,     vol: 0.0008 },
+            DOGE:{ label: 'DOGE / USD',base: 0.18,    vol: 0.001  },
+            EUR: { label: 'EUR / USD', base: 1.085,   vol: 0.00003},
+            GBP: { label: 'GBP / USD', base: 1.27,    vol: 0.00004},
+            JPY: { label: 'USD / JPY', base: 149.5,   vol: 0.003  },
+            CAD: { label: 'USD / CAD', base: 1.365,   vol: 0.00003},
+            AUD: { label: 'AUD / USD', base: 0.655,   vol: 0.00004},
+            CHF: { label: 'USD / CHF', base: 0.905,   vol: 0.00003},
+        };
+
+        let currentAsset = 'EUR';
+        let currentPrice = ASSETS['EUR'].base;
+        let prevPrice    = currentPrice;
+        let basePrice    = currentPrice;
+
+        // ---- CHART ----
+        const chartEl = document.getElementById('chart');
+        const chart = LightweightCharts.createChart(chartEl, {
+            layout: { background: { color: '#0b0e14' }, textColor: '#787b86' },
+            grid:   { vertLines: { color: '#1c202e' }, horzLines: { color: '#1c202e' } },
+            timeScale: { timeVisible: true, secondsVisible: true, borderColor: '#2b2f36' },
+            rightPriceScale: { borderColor: '#2b2f36' },
+        });
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#00c15d', downColor: '#ff4a5b',
+            borderVisible: false, wickUpColor: '#00c15d', wickDownColor: '#ff4a5b',
+        });
+
+        let entryLine = null;
+
+        function buildInitialData(asset) {
+            const a = ASSETS[asset];
+            let p = a.base * (0.98 + Math.random() * 0.04);
+            let t = Math.floor(Date.now() / 1000) - 100 * 5;
+            const data = [];
+            for (let i = 0; i < 100; i++) {
+                const o = p;
+                const c = o + (Math.random() - 0.5) * o * a.vol * 10;
+                data.push({ time: t + i * 5, open: o,
+                    high: Math.max(o, c) + Math.random() * o * a.vol,
+                    low:  Math.min(o, c) - Math.random() * o * a.vol,
+                    close: c });
+                p = c;
+            }
+            return data;
+        }
+
+        let initialData = buildInitialData(currentAsset);
+        candleSeries.setData(initialData);
+        currentPrice = initialData[initialData.length - 1].close;
+        prevPrice    = currentPrice;
+        basePrice    = currentPrice;
+
+        let currentBar = { ...initialData[initialData.length - 1] };
+
+        // Tick del precio
+        const tickInterval = setInterval(() => {
+            const a = ASSETS[currentAsset];
+            const change = (Math.random() - 0.5) * currentPrice * a.vol;
+            prevPrice = currentPrice;
+            currentPrice += change;
+
+            currentBar.close = currentPrice;
+            currentBar.high  = Math.max(currentBar.high, currentPrice);
+            currentBar.low   = Math.min(currentBar.low, currentPrice);
+            candleSeries.update(currentBar);
+
+            const now = Math.floor(Date.now() / 1000);
+            if (now - currentBar.time >= 5) {
+                currentBar = { time: now, open: currentPrice, high: currentPrice, low: currentPrice, close: currentPrice };
+            }
+
+            updateTopBar();
+            if (operacionActiva && entryLine) updateEntryMarker();
+        }, 100);
+
+        function updateTopBar() {
+            const up = currentPrice >= prevPrice;
+            const changePct = ((currentPrice - basePrice) / basePrice * 100);
+            document.getElementById('livePrice').textContent = fmtPrice(currentPrice);
+            document.getElementById('livePrice').style.color = up ? '#00c15d' : '#ff4a5b';
+            const cb = document.getElementById('changeBadge');
+            cb.textContent = (changePct >= 0 ? '+' : '') + changePct.toFixed(3) + '%';
+            cb.style.background = changePct >= 0 ? '#00c15d18' : '#ff4a5b18';
+            cb.style.color = changePct >= 0 ? '#00c15d' : '#ff4a5b';
+        }
+
+        window.addEventListener('resize', () => chart.resize(chartEl.clientWidth, chartEl.clientHeight));
+
+        // ---- CAMBIO DE ACTIVO ----
+        document.getElementById('assetSelect').addEventListener('change', e => {
+            if (operacionActiva) { showToast('⏳ Cierra la operación antes de cambiar', '#f5c518'); e.target.value = currentAsset; return; }
+            currentAsset = e.target.value;
+            const a = ASSETS[currentAsset];
+            document.getElementById('pairLabel').textContent = a.label;
+
+            const data = buildInitialData(currentAsset);
+            candleSeries.setData(data);
+            currentPrice = data[data.length - 1].close;
+            prevPrice    = currentPrice;
+            basePrice    = currentPrice;
+            currentBar   = { ...data[data.length - 1] };
+            updateTopBar();
+        });
+
+        // ---- ESTADO ----
+        let balance        = 10000;
+        let inversion      = 100;
+        let expTime        = 60;
+        let operacionActiva = false;
+        let timerInterval  = null;
+        let entryPrice     = 0;
+        let tradeHist      = [];
+
+        // ---- HELPERS ----
+        function fmtMoney(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function fmtPrice(p) {
+            if (p >= 1000) return '$' + p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (p >= 1)    return '$' + p.toFixed(4);
+            return '$' + p.toFixed(6);
+        }
+        function updateBalanceDisplay() { document.getElementById('balanceDisplay').textContent = 'DEMO 🔄: ' + fmtMoney(balance); }
+        function updatePago() {
+            inversion = parseFloat(document.getElementById('invInput').value) || 0;
+            document.getElementById('pagoDisplay').textContent = fmtMoney(inversion * 1.92);
+        }
+
+        function showToast(msg, color) {
+            const t = document.createElement('div');
+            t.textContent = msg;
+            t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${color};color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;font-size:14px;z-index:9999;transition:opacity .4s;`;
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+        }
+
+        // ---- INVERSIÓN ----
+        window.adjInv = d => {
+            const el = document.getElementById('invInput');
+            el.value = Math.max(1, Math.min(balance, (parseFloat(el.value) || 0) + d));
+            updatePago();
+        };
+        window.setInv = v => {
+            document.getElementById('invInput').value = Math.min(balance, v);
+            updatePago();
+        };
+        document.getElementById('invInput').addEventListener('input', updatePago);
+
+        // ---- TIEMPO ----
+        window.setExp = s => {
+            expTime = s;
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        };
+
+        // ---- ENTRY MARKER ----
+        function showEntryMarker(dir, price) {
+            const el = document.getElementById('entryLabel');
+            document.getElementById('entryDir').textContent = dir === 'UP' ? '▲' : '▼';
+            document.getElementById('entryDir').style.color = dir === 'UP' ? '#00c15d' : '#ff4a5b';
+            document.getElementById('entryPrice').textContent = fmtPrice(price);
+            el.style.top = '42%';
+            el.classList.add('show');
+        }
+        function updateEntryMarker() {
+            const dir = tradeHist.length > 0 ? null : null; // usamos variable separada
+            const pnl = (currentDir === 'UP' ? currentPrice - entryPrice : entryPrice - currentPrice);
+            const pnlPct = (pnl / entryPrice * 100).toFixed(2);
+            const pnlEl = document.getElementById('entryPnl');
+            pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnlPct + '%';
+            pnlEl.style.color = pnl >= 0 ? '#00c15d' : '#ff4a5b';
+        }
+        function hideEntryMarker() { document.getElementById('entryLabel').classList.remove('show'); }
+
+        let currentDir = 'UP';
+
+        // ---- TIMER ----
+        function startTimer(segundos, dir) {
+            const overlay = document.getElementById('timerOverlay');
+            const circle  = document.getElementById('timerCircle');
+            const numEl   = document.getElementById('timerNum');
+            const dirEl   = document.getElementById('timerDir');
+            const entryEl = document.getElementById('timerEntry');
+
+            overlay.classList.add('show');
+            dirEl.textContent = dir === 'UP' ? '▲' : '▼';
+            dirEl.style.color = dir === 'UP' ? '#00c15d' : '#ff4a5b';
+            entryEl.textContent = fmtPrice(entryPrice);
+
+            let rem = segundos;
+            timerInterval = setInterval(() => {
+                rem--;
+                const pct = rem / segundos;
+                circle.style.strokeDashoffset = 94.25 * (1 - pct);
+                circle.style.stroke = pct > 0.5 ? '#00c15d' : pct > 0.25 ? '#f5c518' : '#ff4a5b';
+                numEl.textContent = rem >= 60 ? Math.ceil(rem / 60) + 'm ' + (rem % 60) + 's' : rem + 's';
+
+                if (rem <= 0) {
+                    clearInterval(timerInterval);
+                    overlay.classList.remove('show');
+                    cerrarOperacion(dir);
+                }
+            }, 1000);
+        }
+
+        // ---- EJECUTAR OPERACIÓN ----
+        window.ejecutar = dir => {
+            if (operacionActiva) { showToast('⏳ Ya hay una operación activa', '#444'); return; }
+            inversion = parseFloat(document.getElementById('invInput').value) || 0;
+            if (inversion <= 0 || inversion > balance) { showToast('⚠️ Inversión inválida', '#b91c1c'); return; }
+
+            operacionActiva = true;
+            currentDir = dir;
+            entryPrice = currentPrice;
+            balance -= inversion;
+            updateBalanceDisplay();
+
+            // Bloquear botones
+            document.getElementById('btnUp').style.opacity = '0.4';
+            document.getElementById('btnDn').style.opacity = '0.4';
+            document.getElementById('btnUp').disabled = true;
+            document.getElementById('btnDn').disabled = true;
+
+            const color = dir === 'UP' ? '#00c15d' : '#ff4a5b';
+            showToast(`${dir === 'UP' ? '▲ SUBIR' : '▼ BAJAR'} — ${fmtMoney(inversion)} abierto`, color);
+            showEntryMarker(dir, entryPrice);
+
+            // Línea de entrada en el chart
+            entryLine = chart.addLineSeries({ color: color + '88', lineWidth: 1, lineStyle: 1 });
+            const now = Math.floor(Date.now() / 1000);
+            entryLine.setData([{ time: currentBar.time, value: entryPrice }, { time: now + expTime, value: entryPrice }]);
+
+            startTimer(expTime, dir);
+        };
+
+        // ---- CERRAR OPERACIÓN ----
+        function cerrarOperacion(dir) {
+            const closePrice = currentPrice;
+            const gano = dir === 'UP' ? closePrice > entryPrice : closePrice < entryPrice;
+            const ganancia = inversion * 1.92;
+
+            if (gano) {
+                balance += ganancia;
+                showToast(`✅ ¡GANASTE! +${fmtMoney(ganancia - inversion)}`, '#00c15d');
+            } else {
+                showToast(`❌ PERDISTE ${fmtMoney(inversion)}`, '#ff4a5b');
+            }
+
+            updateBalanceDisplay();
+            operacionActiva = false;
+
+            // Quitar línea del chart
+            if (entryLine) { chart.removeSeries(entryLine); entryLine = null; }
+            hideEntryMarker();
+
+            // Desbloquear botones
+            document.getElementById('btnUp').style.opacity = '1';
+            document.getElementById('btnDn').style.opacity = '1';
+            document.getElementById('btnUp').disabled = false;
+            document.getElementById('btnDn').disabled = false;
+
+            // Historial
+            tradeHist.unshift({ dir, asset: ASSETS[currentAsset].label, inv: inversion, gano, entry: entryPrice, close: closePrice });
+            if (tradeHist.length > 5) tradeHist.pop();
+            renderHist();
+          // Guardar en localStorage para Historial.html
+   const hist = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
+   hist.unshift({
+     date: new Date().toISOString(),
+     asset: ASSETS[currentAsset].label,
+     dir,
+     inv: inversion,
+     entry: entryPrice,
+     close: closePrice,
+     gano
+   });
+   if(hist.length > 200) hist.pop();
+   localStorage.setItem('tradeHistory', JSON.stringify(hist));
+        }
+
+        function renderHist() {
+            const el = document.getElementById('histList');
+            if (!tradeHist.length) { el.innerHTML = '<span>Sin historial</span>'; return; }
+            el.innerHTML = tradeHist.map(h => `
+                <div class="flex justify-between items-center py-0.5 border-b border-gray-800">
+                    <span style="color:${h.gano ? '#00c15d' : '#ff4a5b'};font-weight:700">${h.gano ? '✓' : '✗'} ${h.dir}</span>
+                    <span class="text-gray-500">${h.asset}</span>
+                    <span style="color:${h.gano ? '#00c15d' : '#ff4a5b'}">${h.gano ? '+' : '-'}${fmtMoney(h.gano ? h.inv * 0.92 : h.inv)}</span>
+                </div>`).join('');
+        }
+
+        // ---- DEPÓSITO / RETIRO ----
+        document.getElementById('btnDeposit').addEventListener('click', () => {
+            const m = parseFloat(prompt('¿Cuánto depositar?', '1000'));
+            if (!isNaN(m) && m > 0) { balance += m; updateBalanceDisplay(); showToast(`✅ Depósito de ${fmtMoney(m)}`, '#00c15d'); }
+        });
+        document.getElementById('btnWithdraw').addEventListener('click', () => {
+            const m = parseFloat(prompt('¿Cuánto retirar?', '500'));
+            if (!isNaN(m) && m > 0 && m <= balance) { balance -= m; updateBalanceDisplay(); showToast(`💸 Retiro de ${fmtMoney(m)}`, '#f5c518'); }
+            else if (m > balance) showToast('⚠️ Saldo insuficiente', '#b91c1c');
+        });
+        document.getElementById('btnHelp').addEventListener('click', () => showToast('💬 Soporte: support@quotex.demo', '#1d4ed8'));
+
+        // ---- FOREX LISTA ----
+        const DIVISAS = [
+            { code: 'CAD', flag: '🍁', label: 'CAD', color: '#f87171' },
+            { code: 'MXN', flag: '🌮', label: 'MXN', color: '#86efac' },
+            { code: 'BRL', flag: '🌎', label: 'BRL', color: '#fde047' },
+            { code: 'AUD', flag: '🦘', label: 'AUD', color: '#60a5fa' },
+            { code: 'CHF', flag: '🐼', label: 'CHF', color: '#f87171' },
+            { code: 'RUB', flag: '🐻', label: 'RUB', color: '#9ca3af' },
+        ];
+        let prevForex = {};
+
+        async function fetchForex() {
+            try {
+                const codes = DIVISAS.map(d => d.code).join(',');
+                const res = await fetch(`https://api.frankfurter.app/latest?from=USD&to=${codes}`);
+                if (!res.ok) throw new Error();
+                renderForex((await res.json()).rates);
+            } catch { simulateForex(); }
+        }
+        function simulateForex() {
+            const base = { CAD:1.36, MXN:17.1, BRL:4.97, AUD:1.53, CHF:0.90, RUB:91.5 };
+            const rates = {};
+            DIVISAS.forEach(d => {
+                const p = prevForex[d.code] || base[d.code];
+                rates[d.code] = +(p * (1 + (Math.random() - 0.499) * 0.002)).toFixed(4);
+            });
+            renderForex(rates);
+        }
+        function renderForex(rates) {
+            document.getElementById('forexList').innerHTML = DIVISAS.map(d => {
+                const val = rates[d.code]; if (!val) return '';
+                const prev = prevForex[d.code];
+                const dir = prev ? (val > prev ? '▲' : val < prev ? '▼' : '—') : '—';
+                const dc  = dir === '▲' ? '#ff4a5b' : dir === '▼' ? '#00c15d' : '#9ca3af';
+                prevForex[d.code] = val;
+                return `<div class="flex items-center justify-between py-0.5">
+                    <span class="text-xs font-bold" style="color:${d.color}">${d.flag} ${d.label}</span>
+                    <span class="text-xs font-mono font-bold text-white">${val >= 100 ? val.toFixed(2) : val.toFixed(4)} <span style="color:${dc};font-size:10px">${dir}</span></span>
+                </div>`;
+            }).join('');
+        }
+
+        fetchForex();
+        setInterval(fetchForex, 30000);
+        updatePago();
+        updateTopBar();
+    });
+    </script>
+</body>
+</html>

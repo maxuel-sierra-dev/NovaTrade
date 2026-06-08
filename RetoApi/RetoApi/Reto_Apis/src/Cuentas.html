@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuentas - Iniciar Sesión</title>
+
+    <link rel="icon" href="img/logo.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles/styles.css">
+</head>
+
+<body class="flex flex-col">
+
+    <div class="h-14 bg-[#12151e] border-b border-gray-800 flex items-center px-4 justify-between">
+        <div class="flex items-center space-x-3">
+            <img src="img/logo.png" style="width:32px;height:32px;border-radius:6px;">
+            <span class="text-lg font-bold text-gray-200">Iniciar Sesión</span>
+        </div>
+        <div class="text-gray-400 text-sm">Accede a tu cuenta</div>
+    </div>
+
+    <div class="flex flex-1">
+
+        <nav class="sidebar">
+            <a href="index.html" class="nav-btn" title="Gráfico">
+                <span>📈</span><p>Gráfico</p>
+            </a>
+            <a href="Precios-Cryptos.html" class="nav-btn">
+                <span>₿</span><p>Cripto</p>
+            </a>
+            <div class="nav-divider"></div>
+            <a href="Historial.html" class="nav-btn"><span>📋</span><p>Historial</p></a>
+            <a href="Cuentas.html" class="nav-btn active"><span>👤</span><p>Cuenta</p></a>
+            <a href="config.html" class="nav-btn"><span>⚙️</span><p>Config</p></a>
+        </nav>
+
+        <main class="flex-1 flex items-center justify-center">
+
+            <form onsubmit="return login(event)" 
+                class="bg-[#12151e] border border-[#1c202e] rounded-2xl p-8 w-80 shadow-xl">
+
+                <h2 class="text-xl font-bold mb-6 text-center">Acceso</h2>
+
+                <div id="error" class="text-red-400 text-sm mb-3 text-center"></div>
+
+                <input 
+                    type="text" 
+                    id="usuario"
+                    placeholder="Usuario"
+                    class="w-full mb-4 px-4 py-2 rounded-lg bg-[#0b0e14] border border-[#2a2f3e] focus:border-yellow-500 outline-none text-sm"
+                >
+
+                <input 
+                    type="password" 
+                    id="password"
+                    placeholder="Contraseña"
+                    class="w-full mb-6 px-4 py-2 rounded-lg bg-[#0b0e14] border border-[#2a2f3e] focus:border-yellow-500 outline-none text-sm"
+                >
+
+                <button 
+                    type="submit"
+                    class="w-full h-10 rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-95"
+                    style="background:#00c15d">
+                    ENTRAR
+                </button>
+
+            </form>
+
+        </main>
+
+    </div>
+
+    <script>
+        function login(e) {
+            e.preventDefault();
+
+            const user = document.getElementById("usuario").value;
+            const pass = document.getElementById("password").value;
+            const error = document.getElementById("error");
+
+            if (!user || !pass) {
+                error.textContent = "Completa todos los campos";
+                return false;
+            }
+
+            // DEMO LOGIN
+            if (user === "admin" && pass === "1234") {
+                window.location.href = "index.html";
+            } else {
+                error.textContent = "Credenciales incorrectas";
+            }
+
+            return false;
+        }
+    </script>
+
+</body>
+</html>
