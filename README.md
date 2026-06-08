@@ -57,7 +57,7 @@ src/
 ├── Cuentas.html
 ├──Historial.html
 ├──index.html
-└── Precios-Cryptoshtml
+└── Precios-Cryptos.html
 ```
 
 ---
